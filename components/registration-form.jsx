@@ -1,7 +1,7 @@
 // components/registration-form.jsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from './card';
 import { SubmitButton } from './submit-button';
 import { Alert } from './alert';
@@ -12,7 +12,7 @@ export function RegistrationForm({ onSwitchToLogin }) {
     lastName: '',
     username: '',
     password: '',
-    favoriteColor: '',
+    favoriteColor: '#',
     nickname: '',
     birthday: ''
   });
@@ -22,17 +22,59 @@ export function RegistrationForm({ onSwitchToLogin }) {
     success: false,
     error: null
   });
+  
+  const [colorError, setColorError] = useState('');
+
+  // Check if a string is a valid hex color
+  const isValidHexColor = (color) => {
+    return /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/.test(color);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    
+    // Special handling for favorite color field
+    if (name === 'favoriteColor') {
+      // Ensure it starts with #
+      let newValue = value;
+      if (!newValue.startsWith('#')) {
+        newValue = '#' + newValue;
+      }
+      
+      // Limit to 7 characters (#RRGGBB)
+      newValue = newValue.slice(0, 7);
+      
+      // Only allow hex characters
+      newValue = newValue.replace(/[^#A-Fa-f0-9]/g, '');
+      
+      setFormData(prev => ({
+        ...prev,
+        [name]: newValue
+      }));
+      
+      // Validate the color format
+      if (newValue.length > 1 && !isValidHexColor(newValue)) {
+        setColorError('Please enter a valid hex color (e.g., #FF0000 for red)');
+      } else {
+        setColorError('');
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // Validate hex color format before submission
+    if (!isValidHexColor(formData.favoriteColor)) {
+      setColorError('Please enter a valid hex color (e.g., #FF0000 for red)');
+      return;
+    }
+    
     setFormStatus({ loading: true, success: false, error: null });
     
     try {
@@ -56,10 +98,15 @@ export function RegistrationForm({ onSwitchToLogin }) {
         lastName: '',
         username: '',
         password: '',
-        favoriteColor: '',
+        favoriteColor: '#',
         nickname: '',
         birthday: ''
       });
+      
+      // After a short delay, switch to login
+      setTimeout(() => {
+        onSwitchToLogin();
+      }, 2000);
     } catch (error) {
       setFormStatus({ loading: false, success: false, error: error.message });
     }
@@ -155,17 +202,33 @@ export function RegistrationForm({ onSwitchToLogin }) {
             
             <div>
               <label htmlFor="favoriteColor" className="block text-sm font-medium text-gray-700">
-                What's your favorite color?
+                What's your favorite color? (Hex format, e.g., #FF0000)
               </label>
-              <input
-                id="favoriteColor"
-                name="favoriteColor"
-                type="text"
-                required
-                value={formData.favoriteColor}
-                onChange={handleChange}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-              />
+              <div className="mt-1 flex items-center">
+                <input
+                  id="favoriteColor"
+                  name="favoriteColor"
+                  type="text"
+                  required
+                  pattern="^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$"
+                  value={formData.favoriteColor}
+                  onChange={handleChange}
+                  className={`block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 ${colorError ? 'border-red-500' : ''}`}
+                  placeholder="#RRGGBB"
+                />
+                {formData.favoriteColor.length > 1 && (
+                  <div 
+                    className="ml-2 w-8 h-8 border border-gray-300 rounded"
+                    style={{ backgroundColor: isValidHexColor(formData.favoriteColor) ? formData.favoriteColor : 'transparent' }}
+                  ></div>
+                )}
+              </div>
+              {colorError && (
+                <p className="mt-1 text-sm text-red-600">{colorError}</p>
+              )}
+              <p className="mt-1 text-xs text-gray-500">
+                Use the color selector in the header to find a color you like, then copy the HEXCODE here.
+              </p>
             </div>
             
             <div>

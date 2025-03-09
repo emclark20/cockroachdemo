@@ -2,9 +2,8 @@
 'use client';
 
 import { useState } from 'react';
+import LoginForm from '../components/login-form';
 import { RegistrationForm } from '../components/registration-form';
-import { LoginForm } from '../components/login-form';
-import { Header } from '../components/header';
 import { Footer } from '../components/footer';
 
 export default function Home() {
@@ -20,7 +19,6 @@ export default function Home() {
   
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
       
       <main className="flex-grow container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto">

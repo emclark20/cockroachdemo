@@ -5,8 +5,10 @@ import { useState } from 'react';
 import { Card } from './card';
 import { SubmitButton } from './submit-button';
 import { Alert } from './alert';
+import { useRouter } from 'next/navigation';
 
-export function LoginForm({ onSwitchToSignUp }) {
+// Using default export to match the import in page.jsx
+export default function LoginForm({ onSwitchToSignUp }) {
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -17,6 +19,8 @@ export function LoginForm({ onSwitchToSignUp }) {
     success: false,
     error: null
   });
+  
+  const router = useRouter();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -28,9 +32,11 @@ export function LoginForm({ onSwitchToSignUp }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('Login form submitted');
     setFormStatus({ loading: true, success: false, error: null });
     
     try {
+      console.log('Sending login request');
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: {
@@ -39,18 +45,25 @@ export function LoginForm({ onSwitchToSignUp }) {
         body: JSON.stringify(formData),
       });
       
+      console.log('Login response status:', response.status);
+      
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || 'Login failed');
       }
       
       const result = await response.json();
+      console.log('Login successful, result:', result);
       setFormStatus({ loading: false, success: true, error: null });
       
-      // You could redirect the user or update app state here
-      // For example: router.push('/dashboard');
+      // Show success for a moment before redirecting
+      setTimeout(() => {
+        console.log('Redirecting to dashboard...');
+        router.push('/dashboard');
+      }, 1000);
       
     } catch (error) {
+      console.error('Login error:', error);
       setFormStatus({ loading: false, success: false, error: error.message });
     }
   };
@@ -62,7 +75,7 @@ export function LoginForm({ onSwitchToSignUp }) {
         
         {formStatus.success && (
           <Alert type="success" className="mb-4">
-            Login successful! Welcome back.
+            Login successful! Redirecting to dashboard...
           </Alert>
         )}
         

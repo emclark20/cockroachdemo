@@ -1,6 +1,7 @@
 // app/api/login/route.js
 import { Client } from 'pg';
 import bcrypt from 'bcrypt';
+import { createToken, setTokenCookie } from '../../../lib/jwt';
 
 export async function POST(request) {
   try {
@@ -39,20 +40,30 @@ export async function POST(request) {
         return Response.json({ message: 'Invalid username or password' }, { status: 401 });
       }
       
-      // Don't send password hash to the client
-      delete user.password_hash;
+      // Create payload for JWT
+      const tokenPayload = {
+        id: user.id,
+        username: user.username,
+        firstName: user.first_name,
+        lastName: user.last_name
+      };
       
-      // In a real application, you would create a session or JWT token here
+      console.log('Creating token with payload:', tokenPayload);
+      
+      // Generate JWT token using jose
+      const token = await createToken(tokenPayload);
+      
+      console.log('Token created, setting cookie...');
+      
+      // Set the cookie
+      setTokenCookie(token);
+      
+      console.log('Cookie set, returning response...');
       
       return Response.json({ 
         success: true, 
         message: 'Login successful',
-        user: {
-          id: user.id,
-          username: user.username,
-          firstName: user.first_name,
-          lastName: user.last_name
-        }
+        user: tokenPayload
       });
       
     } finally {
